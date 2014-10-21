@@ -25,22 +25,35 @@ Plugin.create :drafts do
 
   def add_draft(text)
     @@drafts.transaction do
+      if @@drafts[:list] == nil
+        @@drafts[:list] = []
+      end
       @@drafts[:list] << text
       @@drafts[:list] = @@drafts[:list].uniq
+      Plugin.call(:update, nil, [Message.new(:message => "下書きに 「" + text + "」 を追加しました", :system => true)])
     end
-    Plugin.call(:update, nil, [Message.new(:message => "下書きに 「" + text + "」 を追加しました", :system => true)])
   end
 
   def del_draft(text)
     @@drafts.transaction do
-      @@drafts[:list] = @@drafts[:list].reject!{|line| line == text }
+      if @@drafts[:list] == nil
+        @@drafts[:list] = []
+      end
+      if @@drafts[:list] = @@drafts[:list].reject!{|line| line == text }
+      Plugin.call(:update, nil, [Message.new(:message => "下書き 「" + text + "」 を削除しました", :system => true)])
+      else
+      Plugin.call(:update, nil, [Message.new(:message => "下書き 「" + text + "」 は存在しません", :system => true)])
+      end
     end
-    Plugin.call(:update, nil, [Message.new(:message => "下書きに 「" + text + "」 を削除しました", :system => true)])
   end
 
   def pick_draft(text)
     lines = ""
     @@drafts.transaction do
+      if @@drafts[:list] == nil
+        @@drafts[:list] = []
+      end
+
       lines = @@drafts[:list]
     end
 
@@ -53,11 +66,10 @@ Plugin.create :drafts do
     else
       picked = lines[lines.size - @i]
     end
-  
 
     picked
   end
- 
+
   drafts_init
   @@drafts.transaction do
     if @@drafts[:list] == nil
